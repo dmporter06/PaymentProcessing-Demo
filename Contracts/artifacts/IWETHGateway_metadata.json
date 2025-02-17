@@ -1,0 +1,92 @@
+{
+	"compiler": {
+		"version": "0.8.28+commit.7893614a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "pool",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "onBehalfOf",
+						"type": "address"
+					},
+					{
+						"internalType": "uint16",
+						"name": "referralCode",
+						"type": "uint16"
+					}
+				],
+				"name": "depositETH",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "pool",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					}
+				],
+				"name": "withdrawETH",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Contracts/AaveLendingProcessor.sol": "IWETHGateway"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Contracts/AaveLendingProcessor.sol": {
+			"keccak256": "0x9f4d8435ba3b9e0c689cf9eb00b1ac70de4d3a6cef5bf1630bfa1ed5d4170407",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://14943a808371b1ba48ca7d84688b1bd2973685befd914b73f7c5fb38c87227db",
+				"dweb:/ipfs/QmS9qSHmEhaYruG1iARcBqiGbkC7Ypoy4kzmPcjoJUn15B"
+			]
+		}
+	},
+	"version": 1
+}

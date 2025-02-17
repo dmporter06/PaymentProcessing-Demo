@@ -1,0 +1,72 @@
+{
+	"compiler": {
+		"version": "0.8.28+commit.7893614a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"name": "merchant",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_merchant",
+						"type": "address"
+					}
+				],
+				"name": "payMerchant",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Contracts/Test.sol": "PayMerchant"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Contracts/Test.sol": {
+			"keccak256": "0x92e38ba374a0488f447f21b39eefe49a02309e47d5cdf44333c28808adb033a5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bb388e9f3020bc860f295c034279da19b06fc911d69ee6578ef3a4011eaee6b2",
+				"dweb:/ipfs/QmczQ9B6WFEgG743CqcyChCTTsMmCbASZpURVi7oUuM436"
+			]
+		}
+	},
+	"version": 1
+}
