@@ -33,8 +33,6 @@ contract AaveLendingProcessor {
     IPool public immutable aavePool;
     address public immutable WETH;
 
-    uint256 public totalDeposited;
-
     event FundsLent(uint256 amount);
     event FundsRetrieved(uint256 withdrawnAmount);
     event InterestCollected(uint256 amount);
@@ -64,8 +62,6 @@ contract AaveLendingProcessor {
         aavePool.supply(WETH, msg.value, address(this), 0);
 
         // Track the total deposited amount
-        totalDeposited += msg.value;
-
         emit FundsLent(msg.value);
     }
 
@@ -81,13 +77,7 @@ contract AaveLendingProcessor {
 
     // Collect earned interest (calculated based on reserve income)
     function collectInterest() external view returns (uint256) {
-        uint256 normalizedIncome = aavePool.getReserveNormalizedIncome(WETH);
-
-        // Ensure we correctly calculate interest as growth over totalDeposited
-        require(totalDeposited > 0, "No funds deposited yet");
-
-        uint256 availableInterest = normalizedIncome - totalDeposited;
-        return availableInterest; 
+        return aavePool.getReserveNormalizedIncome(WETH); 
     }
 
     // Allow contract to receive ETH

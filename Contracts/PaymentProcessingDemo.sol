@@ -6,7 +6,12 @@ pragma solidity ^0.8.28;
 
 // Payment Processing with Aave lending integration Smart Contract
 
-// Make this a github repository
+// Current Needed Fixes / Potential Upgrades:
+// Distribute ETH among the test accounts to cover gas, (merchants for withdrawals)
+// Update Batch Lending Function to automatically lend to Aave at set intervals, not simply restricting the owner from doing so less than every hour
+// ^^^ Make sure that the function doesn't call if there are not enough funds in the PaymentProcessor contract to meet the lending threshold
+// requestRetrieveFunds may have an issue, where if a merchant retrieves funds from lending for withdrawal, if they wait over an hour afterwards to execute the withdraw, their funds will be lent out again (Find a Fix)
+// Potentially implement a feature to automatically credit merchant balances in the struct for Aave interest distribution
 
 // Imports the functionality for lending ETH on Aave
 import "Contracts/AaveLendingProcessor.sol";
@@ -17,14 +22,14 @@ contract PaymentProcessor {
     
     IAaveLendingProcessor public immutable aaveLendingProcessor;
     
-    uint256 public lastLendTimestamp;
-    uint256 public lastRetrieveTimestamp;
+    uint256 lastLendTimestamp;
+    uint256 lastRetrieveTimestamp;
     
     // Update lending and retriving thresholds
-    uint256 public lendingThreshold = 1 ether;
-    uint256 public retrieveThreshold = 1 ether;
+    uint256 lendingThreshold = 0.1 ether;
+    uint256 retrieveThreshold = 0.1 ether;
 
-    // Threshold setter functions for testing purposes, REMOVE FOR LIVE DEMO
+    // Threshold setter functions for testing purposes, can be removed if payment processor is sure they don't want to modify these limits in the future
     function setLendingThreshold(uint256 _newLendingThreshold) external onlyOwner {
         lendingThreshold = _newLendingThreshold;
     }
@@ -45,12 +50,13 @@ contract PaymentProcessor {
     mapping(uint256 => address) merchantIds;
     uint256 nextMerchantId;
 
-    event MerchantRegistered(address indexed merchant, uint256 merchantId, address custodialWallet);
+    event MerchantRegistered(address indexed merchant, uint256 indexed merchantId, address custodialWallet);
     event PaymentProcessed(address indexed merchant, address indexed customer, uint256 amount);
-    event FundsWithdrawn(address indexed merchant, uint256 amount, address indexed recipient);
+    event FundsWithdrawn(address indexed merchant, uint256 amount, address recipient);
     event FundsLentToAave(uint256 amount);
     event FundsRetrievedFromAave(uint256 amount);
     event FundsReceived(uint256 amount, address sender);
+    event EmergencyWithdrawalActivitated(uint amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -70,19 +76,21 @@ contract PaymentProcessor {
 
     function registerMerchant(string memory _merchantName, address _custodialWallet) external onlyOwner {
         require(!merchants[_custodialWallet].isRegistered, "Merchant already registered");
+        
         merchants[_custodialWallet] = Merchant(nextMerchantId, _merchantName, _custodialWallet, 0, true);
         merchantIds[nextMerchantId] = _custodialWallet;
+        
         emit MerchantRegistered(_custodialWallet, nextMerchantId, _custodialWallet);
-        unchecked {
-            nextMerchantId++;
-        }
+        
+        unchecked { nextMerchantId++; }
     }
 
     function processPayment(address _merchant) external payable {
-        require(merchants[_merchant].isRegistered, "Merchant not registered");
+        Merchant storage merchant = merchants[_merchant];  // Cache in memory
+        require(merchant.isRegistered, "Merchant not registered");
         require(msg.value > 0, "Payment amount must be greater than zero");
 
-        merchants[_merchant].balance += msg.value;
+        merchant.balance += msg.value;
         emit PaymentProcessed(_merchant, msg.sender, msg.value);
     }
 
@@ -104,12 +112,12 @@ contract PaymentProcessor {
 
     // This function costs a shit ton of gas to deploy for some reason
     function withdrawFunds(address payable _recipient, uint256 amount) external onlyMerchant {
-        require(merchants[msg.sender].balance >= amount, "Insufficient balance");
+        Merchant storage merchant = merchants[msg.sender];  // Cache in memory
+        require(merchant.balance >= amount, "Insufficient balance");
         require(address(this).balance >= amount, "Not enough liquidity available, retrieve funds first");
 
-        merchants[msg.sender].balance -= amount;
+        unchecked { merchant.balance -= amount; }  // Safe subtraction, saves gas
 
-        // Using transfer to minimize gas cost
         _recipient.transfer(amount);
 
         emit FundsWithdrawn(msg.sender, amount, _recipient);
@@ -121,6 +129,8 @@ contract PaymentProcessor {
 
         (bool success, ) = owner.call{value: contractBalance}("");
         require(success, "Emergency withdrawal failed");
+
+        emit EmergencyWithdrawalActivitated(contractBalance);
     }
 
     function requestRetrieveFunds(uint256 amount) external onlyMerchant {
@@ -145,11 +155,12 @@ contract PaymentProcessor {
     }
 
     // Batch lending function
+    // Update so that it leaves a reserve of ETH in the contract to cover gas
     function lendFundsBatch() external onlyOwner {
         require(block.timestamp >= lastLendTimestamp + 1 hours, "Lending too soon");
-        require(address(this).balance >= lendingThreshold, "Not enough funds to lend");
+        require(address(this).balance >= lendingThreshold + 0.1 ether, "Not enough funds to lend");
 
-        uint256 amountToLend = address(this).balance;
+        uint256 amountToLend = address(this).balance - 0.1 ether;
 
         // Directly call lending function in AaveLendingProcessor
         aaveLendingProcessor.lendFunds{value: amountToLend}();
@@ -160,6 +171,7 @@ contract PaymentProcessor {
     }
 
     // Batch retrieval function
+    // Shouldn't need to update for a reserve since lendFundsBatch() already keeps a reserve for this purpose?
     function retrieveLentFundsBatch(uint256 amount) external onlyOwner {
         require(block.timestamp >= lastRetrieveTimestamp + 1 hours, "Retrieving too soon");
         require(amount >= retrieveThreshold, "Amount too small to retrieve");
